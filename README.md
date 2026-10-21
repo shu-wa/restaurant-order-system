@@ -28,6 +28,12 @@ java -jar target/restaurant.jar --demo --admin
 
 デモの店舗・商品・アレルゲン情報は架空のテストデータです。実際の食物アレルギーの判断には使用できません。
 
+![保守版のメニュー検索と注文の実行結果](docs/images/search-order.png)
+
+[売上確認の実行結果](docs/images/sales.png) / [ポートフォリオの紹介ページ](https://main.d217a718xi2gst.amplifyapp.com/projects/restaurant-order-system)
+
+紹介用データは`portfolio/project.json`です。ポートフォリオの管理画面から取り込めます。画像パスは上記ポートフォリオサイト内のパスです。
+
 ## できること
 
 - 店舗別メニューの検索。アレルゲン除外、価格・カロリー上限、限定商品の条件を組み合わせられます。

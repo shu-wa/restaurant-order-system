@@ -19,18 +19,21 @@ public final class Main {
     private Main() { }
 
     public static void main(String[] args) {
+        var console = System.console();
+        var out = console == null ? new PrintWriter(System.out, true, StandardCharsets.UTF_8) : console.writer();
+        var errors = console == null ? new PrintWriter(System.err, true, StandardCharsets.UTF_8) : console.writer();
         try {
             var flags = new HashSet<>(Arrays.asList(args));
             if (flags.size() != args.length || !Set.of("--demo", "--admin", "--hash-password", "--help").containsAll(flags)) {
                 throw new IllegalArgumentException("引数が不正です。--helpを確認してください。");
             }
             if (flags.contains("--help")) {
-                System.out.println("java -jar target/restaurant.jar [--demo] [--admin]\n--demo: 架空データの一時DB\n--admin: 管理モード\n--hash-password: 管理パスワードのハッシュ作成");
+                out.println("java -jar target/restaurant.jar [--demo] [--admin]\n--demo: 架空データの一時DB\n--admin: 管理モード\n--hash-password: 管理パスワードのハッシュ作成");
+                out.flush();
                 return;
             }
             if (flags.contains("--hash-password")) {
                 if (flags.size() != 1) throw new IllegalArgumentException("--hash-passwordは単独で指定してください。");
-                var console = System.console();
                 if (console == null) throw new IllegalArgumentException("パスワード作成は対話型ターミナルで実行してください。");
                 var password = console.readPassword("管理パスワード (12～128文字): ");
                 if (password == null) return;
@@ -42,7 +45,6 @@ public final class Main {
             boolean admin = flags.contains("--admin");
             if (admin && !demo) {
                 var encoded = System.getenv("RESTAURANT_ADMIN_PASSWORD_HASH");
-                var console = System.console();
                 if (encoded == null || console == null) {
                     throw new IllegalArgumentException("管理モードにはハッシュ設定と対話型ターミナルが必要です。");
                 }
@@ -62,16 +64,17 @@ public final class Main {
                     Database.script(connection, "/db/schema.sql");
                     Database.script(connection, "/db/demo.sql");
                 }
-                System.out.println("DEMO: 架空データです。終了すると変更は消えます。実際の食物アレルギーの判断には使用できません。");
+                out.println("DEMO: 架空データです。終了すると変更は消えます。実際の食物アレルギーの判断には使用できません。");
             }
-            var out = new PrintWriter(System.out, true, StandardCharsets.UTF_8);
             new RestaurantCli(new CatalogRepository(connections), new OrderService(connections),
-                    new AdminService(connections), new InputStreamReader(System.in, StandardCharsets.UTF_8), out).run(admin);
+                    new AdminService(connections), console == null ? new InputStreamReader(System.in, StandardCharsets.UTF_8) : console.reader(), out).run(admin);
         } catch (IllegalArgumentException error) {
-            System.err.println(error.getMessage());
+            errors.println(error.getMessage());
+            errors.flush();
             System.exit(2);
         } catch (Exception error) {
-            System.err.println("起動・入出力処理を完了できませんでした。設定とDBの状態を確認してください。");
+            errors.println("起動・入出力処理を完了できませんでした。設定とDBの状態を確認してください。");
+            errors.flush();
             System.exit(1);
         }
     }
