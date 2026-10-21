@@ -1,0 +1,10 @@
+/target/
+/.idea/
+/.vscode/
+*.class
+*.log
+*.mv.db
+*.trace.db
+.env
+.env.*
+!.env.example

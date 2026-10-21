@@ -1,0 +1,41 @@
+name: Verify
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+          MYSQL_DATABASE: restaurant_test
+          MYSQL_USER: restaurant_test
+          MYSQL_PASSWORD: disposable-ci-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Build and test with H2
+        run: ./mvnw -B -ntp verify
+      - name: Test against disposable MySQL 8.4
+        run: ./mvnw -B -ntp test
+        env:
+          RESTAURANT_TEST_MYSQL: 'true'
+          RESTAURANT_DB_HOST: 127.0.0.1
+          RESTAURANT_DB_NAME: restaurant_test
+          RESTAURANT_DB_USER: restaurant_test
+          RESTAURANT_DB_PASSWORD: disposable-ci-password
+          RESTAURANT_DB_TLS: REQUIRED
